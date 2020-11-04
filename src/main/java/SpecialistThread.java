@@ -1,12 +1,12 @@
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 public class SpecialistThread extends Thread {
 
-    Queue queue;
-    private final int DRINK_COFFEE = 4000;
+    BlockingQueue queue;
+    private final int WAIT_TIME = 5000;
     private final int PROCESSING_TIME = 4000;
 
-    public SpecialistThread(String name, Queue queue) {
+    public SpecialistThread(String name, BlockingQueue queue) {
         super(name);
         this.queue = queue;
     }
@@ -14,23 +14,31 @@ public class SpecialistThread extends Thread {
     @Override
     public void run() {
         System.out.println(Thread.currentThread().getName() + " онлайн...");
-        try {
-            Thread.sleep(DRINK_COFFEE);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         while (true) {
-            if (!queue.isEmpty()) {
-                System.out.println(Thread.currentThread().getName() + " взял запрос в работу...");
+            if (queue.isEmpty()) {
+                try {
+                    System.out.println(Thread.currentThread().getName() + " ждет звонка...");
+                    Thread.sleep(WAIT_TIME);
+                    if (queue.isEmpty()) {
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    System.out.println(Thread.currentThread().getName() + " взял запрос в работу..." + queue.take());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 try {
                     Thread.sleep(PROCESSING_TIME);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                queue.poll();
                 System.out.println(Thread.currentThread().getName() + " обработал запрос!");
-            } else {
-                break;
             }
         }
         System.out.println(Thread.currentThread().getName() + " на сегодня закончил...");
